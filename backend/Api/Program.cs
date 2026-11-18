@@ -3,14 +3,23 @@ using Application.Abstractions.Messaging;
 using Domain.Common;
 using FluentValidation;
 using Infrastructure.Persistence;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database
+// Database (SQLite file: carshow.db)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
+
+// Make the file path absolute so carshow.db is always created inside the Api folder,
+// no matter which folder the command is run from.
+var sqliteBuilder = new SqliteConnectionStringBuilder(connectionString);
+sqliteBuilder.DataSource = Path.Combine(builder.Environment.ContentRootPath, sqliteBuilder.DataSource);
+
 builder.Services.AddDbContext<IAppDbContext, AppDbContext>(options =>
-    options.UseInMemoryDatabase("VerticalSliceDb"));
+    options.UseSqlite(sqliteBuilder.ConnectionString));
 
 // Validators
 builder.Services.AddValidatorsFromAssembly(typeof(IAppDbContext).Assembly);
