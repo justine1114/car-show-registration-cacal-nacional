@@ -1,5 +1,8 @@
+using System.Text.Json.Serialization;
+using Api.Features.Registrations;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
+using Application.Features.Registrations.CreateRegistration;
 using Domain.Common;
 using FluentValidation;
 using Infrastructure.Persistence;
@@ -21,11 +24,26 @@ sqliteBuilder.DataSource = Path.Combine(builder.Environment.ContentRootPath, sql
 builder.Services.AddDbContext<IAppDbContext, AppDbContext>(options =>
     options.UseSqlite(sqliteBuilder.ConnectionString));
 
+// JSON: enums are sent and received as strings ("Competitor"), not numbers
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
+});
+
+// CORS: allow the React dev server
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 // Validators
 builder.Services.AddValidatorsFromAssembly(typeof(IAppDbContext).Assembly);
 
 // Handlers
-// builder.Services.AddScoped<ICommandHandler<TCommand, Result<TResponse>>, TCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<CreateRegistrationCommand, Result<CreateRegistrationResponse>>, CreateRegistrationCommandHandler>();
 // builder.Services.AddScoped<IQueryHandler<TQuery, Result<TResponse>>, TQueryHandler>();
 
 // API
@@ -52,6 +70,8 @@ using (var scope = app.Services.CreateScope())
     dbContext.SaveChanges();
 }
 
+app.UseCors("Frontend");
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -63,6 +83,6 @@ if (app.Environment.IsDevelopment())
 app.MapGet("/", () => "Welcome to the Vertical Slice API! Go to /scalar/v1 for API documentation.");
 
 // Map endpoints
-// app.Map{FeatureGroup}Endpoints();
+app.MapRegistrationEndpoints();
 
 app.Run();
