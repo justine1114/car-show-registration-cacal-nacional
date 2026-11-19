@@ -17,7 +17,15 @@ public sealed class AppDbContext : DbContext, IAppDbContext
             entity.HasKey(e => e.Id);
 
             entity.Property(e => e.RegistrationNumber).IsRequired().HasMaxLength(20);
-            entity.Property(e => e.RegistrationDate).IsRequired();
+
+            // SQLite does not remember that a date is UTC, so it comes back as "unspecified".
+            // This tells EF Core to mark the date as UTC when it is read, so JSON ends with "Z".
+            entity.Property(e => e.RegistrationDate)
+                .IsRequired()
+                .HasConversion(
+                    date => date,
+                    date => DateTime.SpecifyKind(date, DateTimeKind.Utc));
+
             entity.Property(e => e.ParticipantName).IsRequired().HasMaxLength(150);
             entity.Property(e => e.ContactNumber).IsRequired().HasMaxLength(11);
             entity.Property(e => e.Email).IsRequired().HasMaxLength(200);
