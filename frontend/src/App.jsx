@@ -1,8 +1,7 @@
 import { useState } from "react";
-import StatusBadge from "./components/StatusBadge";
-import PaymentBadge from "./components/PaymentBadge";
 import KpiCards from "./components/KpiCards";
 import RegistrationFilters from "./components/RegistrationFilters";
+import RegistrationTable from "./components/RegistrationTable";
 import { useDebounce } from "./hooks/useDebounce";
 import { SAMPLE_REGISTRATIONS } from "./api/sample-data";
 
@@ -24,7 +23,6 @@ export default function App() {
 
   const debouncedSearch = useDebounce(searchQuery, 400);
 
-  // Client-side filtering simulation for previewing
   const filteredRegistrations = SAMPLE_REGISTRATIONS.filter((reg) => {
     const matchesName = reg.participantName
       .toLowerCase()
@@ -50,10 +48,8 @@ export default function App() {
           Event Staff Registration & Analytics Portal
         </p>
 
-        {/* KPI Cards Row */}
         <KpiCards summary={sampleSummary} />
 
-        {/* Filters Bar */}
         <RegistrationFilters
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -64,45 +60,20 @@ export default function App() {
           onReset={handleReset}
         />
 
-        {/* Registrations List Preview */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 flex justify-between items-center">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
             <h2 className="font-semibold text-slate-800">Registrations</h2>
             <span className="text-xs text-slate-500">
               Showing {filteredRegistrations.length} results
             </span>
           </div>
-          <div className="divide-y divide-slate-200">
-            {filteredRegistrations.length > 0 ? (
-              filteredRegistrations.map((reg) => (
-                <div
-                  key={reg.id}
-                  className="flex items-center justify-between p-4"
-                >
-                  <div>
-                    <p className="font-medium text-slate-900">
-                      {reg.participantName}{" "}
-                      <span className="text-xs font-normal text-slate-500">
-                        ({reg.registrationNumber})
-                      </span>
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {reg.carMakeModel} • {reg.plateNumber} •{" "}
-                      {reg.registrationType}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={reg.status} />
-                    <PaymentBadge paymentStatus={reg.paymentStatus} />
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="p-8 text-center text-sm text-slate-500">
-                No registrations match your filters.
-              </div>
-            )}
-          </div>
+          {filteredRegistrations.length > 0 ? (
+            <RegistrationTable registrations={filteredRegistrations} />
+          ) : (
+            <div className="p-8 text-center text-sm text-slate-500">
+              No registrations match your filters.
+            </div>
+          )}
         </div>
       </div>
     </div>
