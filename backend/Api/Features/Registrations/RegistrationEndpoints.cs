@@ -4,7 +4,9 @@ using Api.Common.Extensions;
 using Api.Common.Filters;
 using Application.Abstractions.Messaging;
 using Application.Features.Registrations.CreateRegistration;
+using Application.Features.Registrations.GetRegistrationById;
 using Application.Features.Registrations.GetRegistrations;
+using Application.Features.Registrations.GetRegistrationSummary;
 using Domain.Common;
 
 public static class RegistrationEndpoints
@@ -28,6 +30,19 @@ public static class RegistrationEndpoints
             .WithSummary("Show all registrations (filters and paging)")
             .Produces<GetRegistrationsResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        // "/summary" is a fixed word. The {id:guid} constraint on the next route means
+        // only real GUIDs match it, so "summary" is never mistaken for an ID.
+        group.MapGet("/summary", GetSummary)
+            .WithName("GetRegistrationSummary")
+            .WithSummary("KPI totals for the dashboard")
+            .Produces<GetRegistrationSummaryResponse>(StatusCodes.Status200OK);
+
+        group.MapGet("/{id:guid}", GetById)
+            .WithName("GetRegistrationById")
+            .WithSummary("Find a registration by ID")
+            .Produces<GetRegistrationByIdResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> Create(
@@ -48,6 +63,29 @@ public static class RegistrationEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(query, cancellationToken);
+
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetSummary(
+        IQueryHandler<GetRegistrationSummaryQuery, Result<GetRegistrationSummaryResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetRegistrationSummaryQuery(), cancellationToken);
+
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetById(
+        Guid id,
+        IQueryHandler<GetRegistrationByIdQuery, Result<GetRegistrationByIdResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetRegistrationByIdQuery(id), cancellationToken);
 
         return result.IsSuccess
             ? TypedResults.Ok(result.Value)

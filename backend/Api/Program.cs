@@ -3,7 +3,9 @@ using Api.Features.Registrations;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
 using Application.Features.Registrations.CreateRegistration;
+using Application.Features.Registrations.GetRegistrationById;
 using Application.Features.Registrations.GetRegistrations;
+using Application.Features.Registrations.GetRegistrationSummary;
 using Domain.Common;
 using FluentValidation;
 using Infrastructure.Persistence;
@@ -31,6 +33,9 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
 });
 
+// Errors such as an invalid query string are returned as ProblemDetails JSON
+builder.Services.AddProblemDetails();
+
 // CORS: allow the React dev server
 builder.Services.AddCors(options =>
 {
@@ -46,6 +51,8 @@ builder.Services.AddValidatorsFromAssembly(typeof(IAppDbContext).Assembly);
 // Handlers
 builder.Services.AddScoped<ICommandHandler<CreateRegistrationCommand, Result<CreateRegistrationResponse>>, CreateRegistrationCommandHandler>();
 builder.Services.AddScoped<IQueryHandler<GetRegistrationsQuery, Result<GetRegistrationsResponse>>, GetRegistrationsQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<GetRegistrationByIdQuery, Result<GetRegistrationByIdResponse>>, GetRegistrationByIdQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<GetRegistrationSummaryQuery, Result<GetRegistrationSummaryResponse>>, GetRegistrationSummaryQueryHandler>();
 
 // API
 builder.Services.AddEndpointsApiExplorer();
@@ -61,14 +68,14 @@ builder.Services.AddOpenApi(options =>
 
 var app = builder.Build();
 
-// Seed data
+// Create carshow.db and apply the migrations if needed, then add the sample data
+// (the seed only runs when the Registrations table is empty)
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-    // dbContext.<Entities>.AddRange(...);
-
-    dbContext.SaveChanges();
+    dbContext.Database.Migrate();
+    RegistrationSeeder.Seed(dbContext);
 }
 
 app.UseCors("Frontend");
