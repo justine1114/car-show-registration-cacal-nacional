@@ -1,64 +1,24 @@
-import { SAMPLE_REGISTRATIONS } from "./sample-data";
+import { getRegistrations, getSummary } from "./sample-data";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5205";
 const USE_MOCK = import.meta.env.VITE_USE_MOCK_DATA === "true";
 
-const SAMPLE_SUMMARY = {
-  totalRegistrations: 25,
-  confirmed: 10,
-  checkedIn: 6,
-  pending: 6,
-  cancelled: 3,
-  totalFees: 61500.0,
-  totalPayments: 42000.0,
-  uncollectedPayments: 19500.0,
-};
-
-export async function fetchRegistrations({
-  search = "",
-  type = "",
-  status = "",
-  page = 1,
-  pageSize = 10,
-} = {}) {
+export async function fetchRegistrations(params = {}) {
   if (USE_MOCK) {
-    // Simulate network delay
-    await new Promise((r) => setTimeout(r, 250));
-
-    const filtered = SAMPLE_REGISTRATIONS.filter((reg) => {
-      const matchesName = reg.participantName
-        .toLowerCase()
-        .includes(search.toLowerCase());
-      const matchesType = type ? reg.registrationType === type : true;
-      const matchesStatus = status ? reg.status === status : true;
-      return matchesName && matchesType && matchesStatus;
-    });
-
-    const totalCount = filtered.length;
-    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-    const safePage = Math.min(page, totalPages);
-    const startIndex = (safePage - 1) * pageSize;
-    const items = filtered.slice(startIndex, startIndex + pageSize);
-
-    return {
-      items,
-      page: safePage,
-      pageSize,
-      totalCount,
-      totalPages,
-    };
+    await new Promise((r) => setTimeout(r, 200));
+    return getRegistrations(params);
   }
 
-  const params = new URLSearchParams();
-  if (search) params.append("search", search);
-  if (type) params.append("type", type);
-  if (status) params.append("status", status);
-  params.append("page", String(page));
-  params.append("pageSize", String(pageSize));
+  const query = new URLSearchParams();
+  if (params.search) query.append("search", params.search);
+  if (params.type) query.append("type", params.type);
+  if (params.status) query.append("status", params.status);
+  query.append("page", String(params.page || 1));
+  query.append("pageSize", String(params.pageSize || 10));
 
   const response = await fetch(
-    `${API_BASE_URL}/api/registrations?${params.toString()}`,
+    `${API_BASE_URL}/api/registrations?${query.toString()}`,
   );
   if (!response.ok) {
     throw new Error(`API error (${response.status})`);
@@ -68,8 +28,8 @@ export async function fetchRegistrations({
 
 export async function fetchRegistrationSummary() {
   if (USE_MOCK) {
-    await new Promise((r) => setTimeout(r, 200));
-    return SAMPLE_SUMMARY;
+    await new Promise((r) => setTimeout(r, 150));
+    return getSummary();
   }
 
   const response = await fetch(`${API_BASE_URL}/api/registrations/summary`);
