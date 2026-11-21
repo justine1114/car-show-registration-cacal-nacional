@@ -36,14 +36,16 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 // Errors such as an invalid query string are returned as ProblemDetails JSON
 builder.Services.AddProblemDetails();
 
-// CORS: allow the React dev server
+// CORS: allow the React dev server (origins come from appsettings.json)
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+var isDevelopment = builder.Environment.IsDevelopment();
 builder.Services.AddCors(options =>
-{
     options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins("http://localhost:5173")
+        policy.SetIsOriginAllowed(origin =>
+                allowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase) ||
+                (isDevelopment && Uri.TryCreate(origin, UriKind.Absolute, out var uri) && uri.Host == "localhost"))
             .AllowAnyHeader()
-            .AllowAnyMethod());
-});
+            .AllowAnyMethod()));
 
 // Validators
 builder.Services.AddValidatorsFromAssembly(typeof(IAppDbContext).Assembly);
