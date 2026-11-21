@@ -8,7 +8,7 @@
 #  5. Case 37 and Case 39 have several steps. Run the steps in the order written.
 
 @Api_HostAddress = http://localhost:5205
-@case01Id = PASTE-THE-ID-FROM-CASE-01-HERE
+@case01Id = 71ca9c79-12e5-44f1-8246-9d908309d8f0
 
 # ===== 1. POST /api/registrations =====
 
@@ -350,3 +350,21 @@ Accept: application/json
 ### Case 40: Unique indexes exist
 # Open backend\Api\carshow.db in DB Browser for SQLite, Registrations table, indexes:
 # IX_Registrations_PlateNumber and IX_Registrations_RegistrationNumber (both unique).
+
+# ===== Screenshot requests (short results so the full response fits on one screen) =====
+
+### Screenshot 7: GET all, paged
+GET {{Api_HostAddress}}/api/registrations?page=2&pageSize=2
+Accept: application/json
+
+### Screenshot 8a: GET filtered by type
+GET {{Api_HostAddress}}/api/registrations?type=VIP&pageSize=2
+Accept: application/json
+
+### Screenshot 8b: GET filtered by status
+GET {{Api_HostAddress}}/api/registrations?status=Confirmed&pageSize=2
+Accept: application/json
+
+### Screenshot 8c: GET filtered by participant name
+GET {{Api_HostAddress}}/api/registrations?participantName=juan&pageSize=2
+Accept: application/json
