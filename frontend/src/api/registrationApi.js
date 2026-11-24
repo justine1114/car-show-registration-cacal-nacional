@@ -11,7 +11,7 @@ export async function fetchRegistrations(params = {}) {
   }
 
   const query = new URLSearchParams();
-  if (params.search) query.append("search", params.search);
+  if (params.search) query.append("participantName", params.search);
   if (params.type) query.append("type", params.type);
   if (params.status) query.append("status", params.status);
   query.append("page", String(params.page || 1));
