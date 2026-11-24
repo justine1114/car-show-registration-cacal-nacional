@@ -7,7 +7,7 @@ import { useDebounce } from "./hooks/useDebounce";
 import {
   fetchRegistrations,
   fetchRegistrationSummary,
-} from "./api/registrationService";
+} from "./api/registrationApi";
 
 export default function App() {
   const [registrations, setRegistrations] = useState([]);
